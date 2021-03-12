@@ -350,6 +350,98 @@ if (ARCHITECTURE STREQUAL "x86_64")
     else()
         target_sources(dynarmic PRIVATE backend/x64/exception_handler_generic.cpp)
     endif()
+elseif(ARCHITECTURE_ARM64)
+    target_sources(dynarmic PRIVATE
+        backend/a64/abi.cpp
+        backend/a64/abi.h
+        backend/a64/block_of_code.cpp
+        backend/a64/block_of_code.h
+        backend/a64/block_range_information.cpp
+        backend/a64/block_range_information.h
+        backend/a64/callback.cpp
+        backend/a64/callback.h
+        backend/a64/constant_pool.cpp
+        backend/a64/constant_pool.h
+        backend/a64/devirtualize.h
+        backend/a64/emit_a64.cpp
+        backend/a64/emit_a64.h
+        backend/a64/emit_a64_aes.cpp
+        backend/a64/emit_a64_crc32.cpp
+        backend/a64/emit_a64_data_processing.cpp
+        backend/a64/emit_a64_floating_point.cpp
+        backend/a64/emit_a64_packed.cpp
+        backend/a64/emit_a64_saturation.cpp
+        backend/a64/emit_a64_sm4.cpp
+        backend/a64/emit_a64_vector.cpp
+        backend/a64/emit_a64_vector_floating_point.cpp
+        backend/a64/emit_a64_vector_saturation.cpp
+        backend/a64/exception_handler.h
+        backend/a64/exclusive_monitor.cpp
+        backend/a64/hostloc.cpp
+        backend/a64/hostloc.h
+        backend/a64/jitstate_info.h
+        backend/a64/oparg.h
+        backend/a64/perf_map.cpp
+        backend/a64/perf_map.h
+        backend/a64/reg_alloc.cpp
+        backend/a64/reg_alloc.h
+    )
+
+    if ("A32" IN_LIST DYNARMIC_FRONTENDS)
+        target_sources(dynarmic PRIVATE
+            backend/a64/a32_emit_a64.cpp
+            backend/a64/a32_emit_a64.h
+            backend/a64/a32_interface.cpp
+            backend/a64/a32_jitstate.cpp
+            backend/a64/a32_jitstate.h
+        )
+    endif()
+
+    if ("A64" IN_LIST DYNARMIC_FRONTENDS)
+        target_sources(dynarmic PRIVATE
+            backend/a64/a64_emit_a64.cpp
+            backend/a64/a64_emit_a64.h
+            backend/a64/a64_interface.cpp
+            backend/a64/a64_jitstate.cpp
+            backend/a64/a64_jitstate.h
+        )
+    endif()
+
+    if (WIN32)
+        target_sources(dynarmic PRIVATE backend/a64/exception_handler_windows.cpp)
+    elseif (APPLE)
+        find_path(MACH_EXC_DEFS_DIR "mach/mach_exc.defs")
+        if (NOT MACH_EXC_DEFS_DIR)
+            message(WARNING "macOS fastmem disabled: unable to find mach/mach_exc.defs")
+            target_sources(dynarmic PRIVATE backend/a64/exception_handler_generic.cpp)
+        else()
+            message(STATUS "mach/mach_exc.defs location: ${MACH_EXC_DEFS_DIR}")
+            execute_process(
+                COMMAND
+                    mkdir -p "${CMAKE_CURRENT_SOURCE_DIR}/backend/a64/mig"
+                COMMAND
+                    mig
+                    -arch x86_64
+                    -user "${CMAKE_CURRENT_SOURCE_DIR}/backend/a64/mig/mach_exc_user.c"
+                    -header "${CMAKE_CURRENT_SOURCE_DIR}/backend/a64/mig/mach_exc_user.h"
+                    -server "${CMAKE_CURRENT_SOURCE_DIR}/backend/a64/mig/mach_exc_server.c"
+                    -sheader "${CMAKE_CURRENT_SOURCE_DIR}/backend/a64/mig/mach_exc_server.h"
+                    "${MACH_EXC_DEFS_DIR}/mach/mach_exc.defs"
+            )
+            target_sources(dynarmic PRIVATE
+                backend/a64/exception_handler_macos.cpp
+                backend/a64/mig/mach_exc_server.c
+                backend/a64/mig/mach_exc_server.h
+            )
+        endif()
+    elseif (UNIX)
+        if(CMAKE_SYSTEM_NAME STREQUAL "Linux")
+            target_link_libraries(dynarmic PUBLIC rt)
+        endif()
+        target_sources(dynarmic PRIVATE backend/a64/exception_handler_posix.cpp)
+    else()
+        target_sources(dynarmic PRIVATE backend/a64/exception_handler_generic.cpp)
+    endif()    
 else()
     message(FATAL_ERROR "Unsupported architecture")
 endif()
@@ -367,9 +459,14 @@ target_link_libraries(dynarmic
         fmt::fmt
         mp
         tsl::robin_map
-        xbyak
         $<$<BOOL:DYNARMIC_USE_LLVM>:${llvm_libs}>
 )
+if (ARCHITECTURE_x86_64)
+    target_link_libraries(dynarmic PRIVATE xbyak)
+elseif(ARCHITECTURE_ARM64)
+    target_link_libraries(dynarmic PRIVATE xbyak_aarch64)
+endif()
+
 if (DYNARMIC_ENABLE_CPU_FEATURE_DETECTION)
     target_compile_definitions(dynarmic PRIVATE DYNARMIC_ENABLE_CPU_FEATURE_DETECTION=1)
 endif()

@@ -8,6 +8,7 @@ git remote add externals-mp https://github.com/MerryMage/mp.git --no-tags
 git remote add externals-robin-map https://github.com/Tessil/robin-map.git --no-tags
 git remote add externals-vixl https://git.linaro.org/arm/vixl.git --no-tags
 git remote add externals-xbyak https://github.com/herumi/xbyak.git --no-tags
+git remote add externals-xbyak_aarch64 https://github.com/herumi/xbyak_aarch64.git --no-tags
 ```
 
 ## Updating
@@ -25,4 +26,5 @@ git subtree pull --squash --prefix=externals/mp externals-mp <ref>
 git subtree pull --squash --prefix=externals/robin-map externals-robin-map <ref>
 git subtree pull --squash --prefix=externals/vixl/vixl externals-vixl <ref>
 git subtree pull --squash --prefix=externals/xbyak externals-xbyak <ref>
+git subtree pull --squash --prefix=externals/xbyak_aarch64 externals-xbyak_aarch64 <ref>
 ```
