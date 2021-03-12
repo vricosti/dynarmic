@@ -350,7 +350,7 @@ if (ARCHITECTURE STREQUAL "x86_64")
     else()
         target_sources(dynarmic PRIVATE backend/x64/exception_handler_generic.cpp)
     endif()
-elseif(ARCHITECTURE_ARM64)
+elseif(ARCHITECTURE STREQUAL "arm64")
     target_sources(dynarmic PRIVATE
         backend/a64/abi.cpp
         backend/a64/abi.h
@@ -461,9 +461,9 @@ target_link_libraries(dynarmic
         tsl::robin_map
         $<$<BOOL:DYNARMIC_USE_LLVM>:${llvm_libs}>
 )
-if (ARCHITECTURE_x86_64)
+if (ARCHITECTURE STREQUAL "x86_64")
     target_link_libraries(dynarmic PRIVATE xbyak)
-elseif(ARCHITECTURE_ARM64)
+elseif(ARCHITECTURE STREQUAL "arm64")
     target_link_libraries(dynarmic PRIVATE xbyak_aarch64)
 endif()
 

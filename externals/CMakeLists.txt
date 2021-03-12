@@ -42,7 +42,7 @@ if (NOT TARGET xbyak)
 endif()
 
 if (NOT TARGET xbyak_aarch64)
-    if(ARCHITECTURE_ARM64)
+    if (ARCHITECTURE STREQUAL "arm64")
         add_library(xbyak_aarch64 INTERFACE)
         target_include_directories(xbyak_aarch64 SYSTEM INTERFACE ${CMAKE_CURRENT_SOURCE_DIR}/xbyak_aarch64/xbyak_aarch64)
         target_compile_definitions(xbyak_aarch64 INTERFACE XBYAK_NO_OP_NAMES)
